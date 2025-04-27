@@ -23,13 +23,13 @@ export default function MonthlyExpensesChart({ refresh }: { refresh: boolean }) 
         setLoading(true);
         setError(null);
         const res = await fetch("/api/transactions");
-        
+
         if (!res.ok) {
           throw new Error(`Error fetching transactions: ${res.status}`);
         }
-        
+
         const data = await res.json();
-        
+
         // Verify that data is an array before setting state
         if (Array.isArray(data)) {
           setTransactions(data);
@@ -78,12 +78,14 @@ export default function MonthlyExpensesChart({ refresh }: { refresh: boolean }) 
     );
   }
 
+  // Aggregate monthly expenses
   const monthlyData = transactions.reduce((acc: { [key: string]: number }, tx) => {
-    const month = format(new Date(tx.date), "MMM yyyy"); // eg: Apr 2025
+    const month = format(new Date(tx.date), "MMM yyyy"); // e.g. Apr 2025
     acc[month] = (acc[month] || 0) + tx.amount;
     return acc;
   }, {});
 
+  // Prepare chart data by transforming the object into an array
   const chartData = Object.keys(monthlyData).map((month) => ({
     month,
     total: monthlyData[month],
@@ -91,8 +93,8 @@ export default function MonthlyExpensesChart({ refresh }: { refresh: boolean }) 
 
   // Sort by month chronologically
   chartData.sort((a, b) => {
-    const dateA = new Date(a.month);
-    const dateB = new Date(b.month);
+    const dateA = new Date(`${a.month} 01`); // Set day as 1st for sorting
+    const dateB = new Date(`${b.month} 01`);
     return dateA.getTime() - dateB.getTime();
   });
 

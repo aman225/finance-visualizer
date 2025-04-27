@@ -1,4 +1,3 @@
-// components/TransactionForm.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { categories } from "@/lib/categories";
 
 interface Transaction {
   _id: string;
   amount: number;
   description: string;
   date: string;
+  category?: string;
 }
 
 interface TransactionFormProps {
@@ -29,6 +31,7 @@ export default function TransactionForm({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
+  const [category, setCategory] = useState("other");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,6 +42,7 @@ export default function TransactionForm({
       setDescription(editingTransaction.description);
       // Format date to YYYY-MM-DD for input[type="date"]
       setDate(new Date(editingTransaction.date).toISOString().split('T')[0]);
+      setCategory(editingTransaction.category || "other");
     }
   }, [editingTransaction]);
 
@@ -46,6 +50,7 @@ export default function TransactionForm({
     setAmount("");
     setDescription("");
     setDate("");
+    setCategory("other");
     setEditingTransaction(null);
   }
 
@@ -70,6 +75,7 @@ export default function TransactionForm({
             amount: Number(amount),
             description,
             date,
+            category,
           }),
         });
 
@@ -83,7 +89,12 @@ export default function TransactionForm({
         const res = await fetch("/api/transactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: Number(amount), description, date }),
+          body: JSON.stringify({ 
+            amount: Number(amount), 
+            description, 
+            date,
+            category
+          }),
         });
 
         if (!res.ok) {
@@ -132,6 +143,24 @@ export default function TransactionForm({
             onChange={(e) => setDate(e.target.value)}
             aria-invalid={error && !date ? "true" : "false"}
           />
+          <Select 
+            value={category} 
+            onValueChange={setCategory}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }}></div>
+                    {category.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-2">
             <Button

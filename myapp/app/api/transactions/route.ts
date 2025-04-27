@@ -1,4 +1,3 @@
-// app/api/transactions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import { Transaction } from "@/models/Transaction";
@@ -6,13 +5,18 @@ import { Transaction } from "@/models/Transaction";
 export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
-    const { amount, description, date } = await request.json();
+    const { amount, description, date, category } = await request.json();
 
     if (!amount || !description || !date) {
-      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
+      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
-    const newTransaction = await Transaction.create({ amount, description, date });
+    const newTransaction = await Transaction.create({ 
+      amount, 
+      description, 
+      date, 
+      category: category || "other" 
+    });
 
     return NextResponse.json(newTransaction, { status: 201 });
   } catch (error) {
@@ -37,7 +41,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     await connectToDatabase();
-    const { id, amount, description, date } = await request.json();
+    const { id, amount, description, date, category } = await request.json();
 
     if (!id || !amount || !description || !date) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
@@ -45,7 +49,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       id,
-      { amount, description, date },
+      { amount, description, date, category: category || "other" },
       { new: true }
     );
 

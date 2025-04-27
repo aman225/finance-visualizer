@@ -7,20 +7,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getCategoryById } from "@/lib/categories";
 
 interface Transaction {
   _id: string;
   amount: number;
   description: string;
   date: string;
+  category?: string;
 }
 
 interface TransactionListProps {
   refresh: boolean;
   onEdit: (transaction: Transaction) => void;
+  limit?: number;
 }
 
-export default function TransactionList({ refresh, onEdit }: TransactionListProps) {
+export default function TransactionList({ refresh, onEdit, limit }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,9 @@ export default function TransactionList({ refresh, onEdit }: TransactionListProp
         
         // Verify that data is an array before setting state
         if (Array.isArray(data)) {
-          setTransactions(data);
+          // Apply limit if specified
+          const limitedData = limit ? data.slice(0, limit) : data;
+          setTransactions(limitedData);
         } else {
           console.error("API did not return an array:", data);
           setError("Unexpected data format received from server");
@@ -56,7 +61,7 @@ export default function TransactionList({ refresh, onEdit }: TransactionListProp
     }
 
     fetchTransactions();
-  }, [refresh]);
+  }, [refresh, limit]);
 
   async function handleDelete(id: string) {
     try {
@@ -113,7 +118,9 @@ export default function TransactionList({ refresh, onEdit }: TransactionListProp
 
   return (
     <div className="max-w-md mx-auto mt-8 space-y-4">
-      <h2 className="text-lg font-semibold mb-4 text-center">Recent Transactions</h2>
+      <h2 className="text-lg font-semibold mb-4 text-center">
+        {limit ? "Recent Transactions" : "All Transactions"}
+      </h2>
       {transactions.map((tx) => (
         <motion.div
           key={tx._id}
@@ -126,12 +133,25 @@ export default function TransactionList({ refresh, onEdit }: TransactionListProp
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-semibold">{tx.description}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(tx.date).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-gray-500">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </p>
+                    {tx.category && (
+                      <div 
+                        className="text-xs px-2 py-0.5 rounded-full" 
+                        style={{ 
+                          backgroundColor: getCategoryById(tx.category).color,
+                          color: "white"
+                        }}
+                      >
+                        {getCategoryById(tx.category).name}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="font-bold mr-4">₹ {tx.amount}</p>
+                  <p className="font-bold mr-4">₹ {Math.abs(tx.amount)}</p>
                   <Button 
                     variant="ghost" 
                     size="icon" 

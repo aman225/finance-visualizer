@@ -4,6 +4,7 @@ import { useState } from "react";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import MonthlyExpensesChart from "../components/MonthlyExpensesChart";
+import  PieChart  from "./PieChart";
 
 interface Transaction {
   _id: string;
@@ -37,11 +38,13 @@ export default function TransactionPage() {
       />
       
       <TransactionList 
-        refresh={refreshFlag} 
+        refresh={refreshFlag}
         onEdit={handleEdit}
       />
       
       <MonthlyExpensesChart refresh={refreshFlag} />
+
+      <PieChart refresh={refreshFlag} />
     </div>
   );
 }
