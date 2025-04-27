@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Transaction {
   _id: string;
@@ -13,18 +15,41 @@ interface Transaction {
   date: string;
 }
 
-export default function TransactionList({ refresh }: { refresh: boolean }) {
+interface TransactionListProps {
+  refresh: boolean;
+  onEdit: (transaction: Transaction) => void;
+}
+
+export default function TransactionList({ refresh, onEdit }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTransactions() {
       try {
+        setLoading(true);
+        setError(null);
         const res = await fetch("/api/transactions");
+        
+        if (!res.ok) {
+          throw new Error(`Error fetching transactions: ${res.status}`);
+        }
+        
         const data = await res.json();
-        setTransactions(data);
+        
+        // Verify that data is an array before setting state
+        if (Array.isArray(data)) {
+          setTransactions(data);
+        } else {
+          console.error("API did not return an array:", data);
+          setError("Unexpected data format received from server");
+          setTransactions([]);
+        }
       } catch (err) {
         console.error("Failed to fetch transactions", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+        setTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -32,6 +57,27 @@ export default function TransactionList({ refresh }: { refresh: boolean }) {
 
     fetchTransactions();
   }, [refresh]);
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch("/api/transactions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete transaction");
+      }
+
+      // Remove from local state
+      setTransactions(transactions.filter(tx => tx._id !== id));
+      toast.success("Transaction deleted successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete transaction");
+    }
+  }
 
   if (loading) {
     return (
@@ -45,14 +91,29 @@ export default function TransactionList({ refresh }: { refresh: boolean }) {
       </div>
     );
   }
-  
 
-  if (transactions.length === 0) {
-    return <p className="text-center">No transactions found.</p>;
+  if (error) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-4 bg-red-50 border border-red-200 rounded-md">
+        <p className="text-red-500 text-center">Error: {error}</p>
+        <Button 
+          className="mt-2 mx-auto block" 
+          onClick={() => window.location.reload()}
+          variant="outline"
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!transactions.length) {
+    return <p className="text-center mt-8">No transactions found.</p>;
   }
 
   return (
     <div className="max-w-md mx-auto mt-8 space-y-4">
+      <h2 className="text-lg font-semibold mb-4 text-center">Recent Transactions</h2>
       {transactions.map((tx) => (
         <motion.div
           key={tx._id}
@@ -69,7 +130,25 @@ export default function TransactionList({ refresh }: { refresh: boolean }) {
                     {new Date(tx.date).toLocaleDateString()}
                   </p>
                 </div>
-                <p className="font-bold">₹ {tx.amount}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold mr-4">₹ {tx.amount}</p>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => onEdit(tx)}
+                    title="Edit transaction"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDelete(tx._id)}
+                    title="Delete transaction"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
