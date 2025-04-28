@@ -24,7 +24,7 @@ Sonner	       Toast Notifications
 
 Clone the repository:
 
-git clone https://github.com/aman225/finance-visualizer.git
+gh repo clone aman225/finance-visualizer
 Install dependencies:
 
 pnpm install
