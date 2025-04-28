@@ -232,8 +232,7 @@ export default function BudgetList({ refresh }: BudgetListProps) {
                   </div>
                   <Progress 
                     value={percentage} 
-                    className={isOverBudget ? "bg-red-200" : ""}
-                     
+                    className={isOverBudget ? "bg-red-200" : ""}             
                   />
                 </div>
               );

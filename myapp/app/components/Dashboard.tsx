@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import TransactionList from "./TransactionList";
+import SpendingInsights from "./SpendingInsights";
 import { getCategoryById } from "@/lib/categories";
 import { ArrowDown, ArrowUp, DollarSign, PieChart } from "lucide-react";
 
@@ -123,6 +124,9 @@ export default function Dashboard({ refresh, onEdit }: { refresh: boolean; onEdi
 
   return (
     <div className="space-y-8">
+      {/* Spending Insights Component */}
+      <SpendingInsights refresh={refresh} />
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Total Expenses Card */}
         <Card>
